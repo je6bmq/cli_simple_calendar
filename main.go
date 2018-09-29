@@ -14,6 +14,27 @@ import (
 	calendar "google.golang.org/api/calendar/v3"
 )
 
+type ICalendar struct {
+	Name  string
+	URL   string
+	Color string
+}
+
+func getIcalendarFromJSONArray(fileName string) ([]ICalendar, error) {
+	data, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return nil, err
+	}
+	var calendars []ICalendar
+	err = json.Unmarshal(data, &calendars)
+
+	if err != nil {
+		return nil, err
+	} else {
+		return calendars, nil
+	}
+}
+
 func getTokenFromJSON(fileName string) (*oauth2.Token, error) {
 	fp, err := os.Open(fileName)
 	defer fp.Close()
@@ -83,4 +104,11 @@ func main() {
 		}
 	}
 
+	calendars, err := getIcalendarFromJSONArray("./ics.json")
+	if err != nil {
+		log.Fatalf("Unable to load ics json file")
+	}
+	for _, ical := range calendars {
+		fmt.Println(ical)
+	}
 }
