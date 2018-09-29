@@ -9,6 +9,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/PuloV/ics-golang"
+
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	calendar "google.golang.org/api/calendar/v3"
@@ -104,11 +106,38 @@ func main() {
 		}
 	}
 
-	calendars, err := getIcalendarFromJSONArray("./ics.json")
+	icsCalendars, err := getIcalendarFromJSONArray("./ics.json")
 	if err != nil {
 		log.Fatalf("Unable to load ics json file")
 	}
-	for _, ical := range calendars {
-		fmt.Println(ical)
+
+	icsParser := ics.New()
+	inputChannel := icsParser.GetInputChan()
+
+	for _, ical := range icsCalendars {
+		inputChannel <- ical.URL
+		// fmt.Println(ical)
+	}
+	icsParser.Wait()
+
+	calendars, err := icsParser.GetCalendars()
+	if err != nil {
+		log.Fatalf("cannnot parse ics data")
+	}
+
+	for _, cal := range calendars {
+		fmt.Println(cal.GetName())
+		for date := startTime; date.Before(endTime); date = date.Add(24 * time.Hour) {
+			eventList, err := cal.GetEventsByDate(date)
+			if err != nil {
+				// log.Fatalf("cannnot load event list")
+			} else {
+				// fmt.Println(eventList)
+				for _, event := range eventList {
+					fmt.Println(event.GetSummary() + " " + event.GetLocation() + " " + event.GetDescription() + " " + event.GetStart().Format("2006-01-02T15:04:05-07:00") + event.GetEnd().Format("2006-01-02T15:04:05-07:00"))
+				}
+			}
+		}
+		fmt.Println("")
 	}
 }
