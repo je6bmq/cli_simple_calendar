@@ -22,6 +22,14 @@ type ICalendar struct {
 	Color string
 }
 
+type CommonEvent struct {
+	Summary     string
+	Description string
+	Location    string
+	Start       time.Time
+	End         time.Time
+}
+
 func getIcalendarFromJSONArray(fileName string) ([]ICalendar, error) {
 	data, err := ioutil.ReadFile(fileName)
 	if err != nil {
