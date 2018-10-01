@@ -78,6 +78,7 @@ func main() {
 	}
 
 	var calIds []string
+	var commonEvents []CommonEvent
 
 	if len(cal.Items) == 0 {
 		log.Fatalf("retrieved data length is equal to 0")
@@ -105,10 +106,13 @@ func main() {
 				} else {
 					endDateStr = item.End.DateTime
 				}
-				fmt.Println(item.Summary + " " + item.Location + " " + item.Description + " " + startDateStr + " " + endDateStr)
+				startDate, _ := time.Parse("2006-01-02T15:04:05-07:00", startDateStr)
+				endDate, _ := time.Parse("2006-01-02T15:04:05-07:00", endDateStr)
+
+				commonEvents = append(commonEvents, CommonEvent{Summary: item.Summary, Location: item.Location, Description: item.Description, Start: startDate, End: endDate})
 			}
 			if len(events.Items) != 0 {
-				fmt.Println("")
+				// fmt.Println("")
 			}
 
 		}
@@ -134,18 +138,19 @@ func main() {
 	}
 
 	for _, cal := range calendars {
-		fmt.Println(cal.GetName())
 		for date := startTime; date.Before(endTime); date = date.Add(24 * time.Hour) {
 			eventList, err := cal.GetEventsByDate(date)
 			if err != nil {
 				// log.Fatalf("cannnot load event list")
 			} else {
-				// fmt.Println(eventList)
 				for _, event := range eventList {
-					fmt.Println(event.GetSummary() + " " + event.GetLocation() + " " + event.GetDescription() + " " + event.GetStart().Format("2006-01-02T15:04:05-07:00") + event.GetEnd().Format("2006-01-02T15:04:05-07:00"))
+					commonEvents = append(commonEvents, CommonEvent{Summary: event.GetSummary(), Location: event.GetLocation(), Description: event.GetDescription(), Start: event.GetStart(), End: event.GetEnd()})
 				}
 			}
 		}
-		fmt.Println("")
+	}
+
+	for _, event := range commonEvents {
+		fmt.Println(event)
 	}
 }
