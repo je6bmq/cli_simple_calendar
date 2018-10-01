@@ -66,7 +66,7 @@ func main() {
 	cal, err := service.CalendarList.List().MaxResults(20).Do()
 
 	if err != nil {
-		log.Fatalf("Unable to read calendar")
+		log.Fatalf("Unable to read calendar: %v", err)
 	}
 
 	var calIds []string
@@ -82,7 +82,7 @@ func main() {
 
 			events, err := service.Events.List(id).TimeMin(startTime.Format("2006-01-02T15:04:05-07:00")).TimeMax(endTime.Format("2006-01-02T15:04:05-07:00")).Do()
 			if err != nil {
-				log.Fatalf("Unable to get events %v", err)
+				log.Fatalf("Unable to get events: %v", err)
 			}
 			for _, item := range events.Items {
 				var startDateStr string
@@ -108,7 +108,7 @@ func main() {
 
 	icsCalendars, err := getIcalendarFromJSONArray("./ics.json")
 	if err != nil {
-		log.Fatalf("Unable to load ics json file")
+		log.Fatalf("Unable to load ics json file: %v", err)
 	}
 
 	icsParser := ics.New()
@@ -122,7 +122,7 @@ func main() {
 
 	calendars, err := icsParser.GetCalendars()
 	if err != nil {
-		log.Fatalf("cannnot parse ics data")
+		log.Fatalf("cannnot parse ics data: %s", err)
 	}
 
 	for _, cal := range calendars {
