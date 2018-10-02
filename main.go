@@ -26,6 +26,7 @@ type CommonEvent struct {
 	Summary     string
 	Description string
 	Location    string
+	Color       string
 	Start       time.Time
 	End         time.Time
 }
@@ -77,49 +78,47 @@ func main() {
 		log.Fatalf("Unable to read calendar: %v", err)
 	}
 
-	var calIds []string
+	colors, err := service.Colors.Get().Do()
+
+	if err != nil {
+		log.Fatalf("cannot read color data from google calendar. : %v", err)
+	}
+
 	var commonEvents []CommonEvent
 
 	if len(cal.Items) == 0 {
 		log.Fatalf("retrieved data length is equal to 0")
 	} else {
 		for _, item := range cal.Items {
-			calIds = append(calIds, item.Id)
-		}
-
-		for _, id := range calIds {
-
+			id := item.Id
+			color := colors.Calendar[item.ColorId].Background
 			events, err := service.Events.List(id).TimeMin(startTime.Format("2006-01-02T15:04:05-07:00")).TimeMax(endTime.Format("2006-01-02T15:04:05-07:00")).Do()
 			if err != nil {
 				log.Fatalf("Unable to get events: %v", err)
 			}
-			for _, item := range events.Items {
+			for _, event := range events.Items {
 				var startDateStr string
 				var endDateStr string
 				var format string
 
-				if len(item.Start.Date) != 0 {
-					startDateStr = item.Start.Date
+				if len(event.Start.Date) != 0 {
+					startDateStr = event.Start.Date
 					format = "2006-01-02"
 				} else {
-					startDateStr = item.Start.DateTime
+					startDateStr = event.Start.DateTime
 					format = "2006-01-02T15:04:05-07:00"
 				}
-				if len(item.End.Date) != 0 {
-					endDateStr = item.End.Date
+				if len(event.End.Date) != 0 {
+					endDateStr = event.End.Date
 					format = "2006-01-02"
 				} else {
-					endDateStr = item.End.DateTime
+					endDateStr = event.End.DateTime
 					format = "2006-01-02T15:04:05-07:00"
 				}
 				startDate, _ := time.Parse(format, startDateStr)
 				endDate, _ := time.Parse(format, endDateStr)
-				commonEvents = append(commonEvents, CommonEvent{Summary: item.Summary, Location: item.Location, Description: item.Description, Start: startDate, End: endDate})
+				commonEvents = append(commonEvents, CommonEvent{Summary: event.Summary, Location: event.Location, Description: event.Description, Color: color, Start: startDate, End: endDate})
 			}
-			if len(events.Items) != 0 {
-				// fmt.Println("")
-			}
-
 		}
 	}
 
@@ -151,7 +150,8 @@ func main() {
 				// log.Fatalf("cannnot load event list")
 			} else {
 				for _, event := range eventList {
-					commonEvents = append(commonEvents, CommonEvent{Summary: event.GetSummary(), Location: event.GetLocation(), Description: event.GetDescription(), Start: event.GetStart(), End: event.GetEnd()})
+					color := urlIcalMap[event.GetCalendar().GetUrl()].Color
+					commonEvents = append(commonEvents, CommonEvent{Summary: event.GetSummary(), Location: event.GetLocation(), Description: event.GetDescription(), Color: color, Start: event.GetStart(), End: event.GetEnd()})
 				}
 			}
 		}
