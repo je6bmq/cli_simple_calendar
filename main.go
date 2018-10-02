@@ -131,9 +131,11 @@ func main() {
 	icsParser := ics.New()
 	inputChannel := icsParser.GetInputChan()
 
+	urlIcalMap := make(map[string]ICalendar)
+
 	for _, ical := range icsCalendars {
 		inputChannel <- ical.URL
-		// fmt.Println(ical)
+		urlIcalMap[ical.URL] = ical
 	}
 	icsParser.Wait()
 
