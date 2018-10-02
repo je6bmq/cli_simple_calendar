@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"time"
 
 	"github.com/PuloV/ics-golang"
+	"github.com/fatih/color"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -26,9 +26,10 @@ type CommonEvent struct {
 	Summary     string
 	Description string
 	Location    string
-	Color       string
-	Start       time.Time
-	End         time.Time
+	// Color       string
+	Color color.Attribute
+	Start time.Time
+	End   time.Time
 }
 
 func getIcalendarFromJSONArray(fileName string) ([]ICalendar, error) {
@@ -78,12 +79,14 @@ func main() {
 		log.Fatalf("Unable to read calendar: %v", err)
 	}
 
-	colors, err := service.Colors.Get().Do()
+	// colors, err := service.Colors.Get().Do()
 
-	if err != nil {
-		log.Fatalf("cannot read color data from google calendar. : %v", err)
-	}
+	// if err != nil {
+	// 	log.Fatalf("cannot read color data from google calendar. : %v", err)
+	// }
 
+	stdOutColor := [7]color.Attribute{color.FgRed, color.FgGreen, color.FgYellow, color.FgBlue, color.FgMagenta, color.FgCyan, color.FgWhite}
+	colorIndex := 0
 	var commonEvents []CommonEvent
 
 	if len(cal.Items) == 0 {
@@ -91,7 +94,7 @@ func main() {
 	} else {
 		for _, item := range cal.Items {
 			id := item.Id
-			color := colors.Calendar[item.ColorId].Background
+			// _color := colors.Calendar[item.ColorId].Background
 			events, err := service.Events.List(id).TimeMin(startTime.Format("2006-01-02T15:04:05-07:00")).TimeMax(endTime.Format("2006-01-02T15:04:05-07:00")).Do()
 			if err != nil {
 				log.Fatalf("Unable to get events: %v", err)
@@ -117,7 +120,7 @@ func main() {
 				}
 				startDate, _ := time.Parse(format, startDateStr)
 				endDate, _ := time.Parse(format, endDateStr)
-				commonEvents = append(commonEvents, CommonEvent{Summary: event.Summary, Location: event.Location, Description: event.Description, Color: color, Start: startDate, End: endDate})
+				commonEvents = append(commonEvents, CommonEvent{Summary: event.Summary, Location: event.Location, Description: event.Description, Color: stdOutColor[colorIndex%7], Start: startDate, End: endDate})
 			}
 		}
 	}
@@ -130,11 +133,12 @@ func main() {
 	icsParser := ics.New()
 	inputChannel := icsParser.GetInputChan()
 
-	urlIcalMap := make(map[string]ICalendar)
+	urlIcalMap := make(map[string]color.Attribute)
 
 	for _, ical := range icsCalendars {
 		inputChannel <- ical.URL
-		urlIcalMap[ical.URL] = ical
+		urlIcalMap[ical.URL] = stdOutColor[colorIndex%7]
+		colorIndex++
 	}
 	icsParser.Wait()
 
@@ -150,14 +154,15 @@ func main() {
 				// log.Fatalf("cannnot load event list")
 			} else {
 				for _, event := range eventList {
-					color := urlIcalMap[event.GetCalendar().GetUrl()].Color
-					commonEvents = append(commonEvents, CommonEvent{Summary: event.GetSummary(), Location: event.GetLocation(), Description: event.GetDescription(), Color: color, Start: event.GetStart(), End: event.GetEnd()})
+					_color := urlIcalMap[event.GetCalendar().GetUrl()]
+					commonEvents = append(commonEvents, CommonEvent{Summary: event.GetSummary(), Location: event.GetLocation(), Description: event.GetDescription(), Color: _color, Start: event.GetStart(), End: event.GetEnd()})
 				}
 			}
 		}
 	}
 
 	for _, event := range commonEvents {
-		fmt.Println(event)
+		printedStr := "summary: " + event.Summary + " " + "start: " + event.Start.Format("2006-01-02T15:04:05-07:00") + " end: " + event.End.Format("2006-01-02T15:04:05-07:00") + " location: " + event.Location + " description: " + event.Description
+		color.New(event.Color).Println(printedStr)
 	}
 }
