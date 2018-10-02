@@ -96,19 +96,24 @@ func main() {
 			for _, item := range events.Items {
 				var startDateStr string
 				var endDateStr string
+				var format string
+
 				if len(item.Start.Date) != 0 {
 					startDateStr = item.Start.Date
+					format = "2006-01-02"
 				} else {
 					startDateStr = item.Start.DateTime
+					format = "2006-01-02T15:04:05-07:00"
 				}
 				if len(item.End.Date) != 0 {
 					endDateStr = item.End.Date
+					format = "2006-01-02"
 				} else {
 					endDateStr = item.End.DateTime
+					format = "2006-01-02T15:04:05-07:00"
 				}
-				startDate, _ := time.Parse("2006-01-02T15:04:05-07:00", startDateStr)
-				endDate, _ := time.Parse("2006-01-02T15:04:05-07:00", endDateStr)
-
+				startDate, _ := time.Parse(format, startDateStr)
+				endDate, _ := time.Parse(format, endDateStr)
 				commonEvents = append(commonEvents, CommonEvent{Summary: item.Summary, Location: item.Location, Description: item.Description, Start: startDate, End: endDate})
 			}
 			if len(events.Items) != 0 {
