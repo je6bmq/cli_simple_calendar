@@ -85,7 +85,7 @@ func main() {
 	// 	log.Fatalf("cannot read color data from google calendar. : %v", err)
 	// }
 
-	stdOutColor := [7]color.Attribute{color.FgRed, color.FgGreen, color.FgYellow, color.FgBlue, color.FgMagenta, color.FgCyan, color.FgWhite}
+	stdOutColor := [14]color.Attribute{color.FgRed, color.FgGreen, color.FgYellow, color.FgBlue, color.FgMagenta, color.FgCyan, color.FgWhite, color.FgHiRed, color.FgHiGreen, color.FgHiYellow, color.FgHiBlue, color.FgHiMagenta, color.FgHiCyan, color.FgHiWhite}
 	colorIndex := 0
 	var commonEvents []CommonEvent
 
@@ -120,8 +120,9 @@ func main() {
 				}
 				startDate, _ := time.Parse(format, startDateStr)
 				endDate, _ := time.Parse(format, endDateStr)
-				commonEvents = append(commonEvents, CommonEvent{Summary: event.Summary, Location: event.Location, Description: event.Description, Color: stdOutColor[colorIndex%7], Start: startDate, End: endDate})
+				commonEvents = append(commonEvents, CommonEvent{Summary: event.Summary, Location: event.Location, Description: event.Description, Color: stdOutColor[colorIndex%14], Start: startDate, End: endDate})
 			}
+			colorIndex++
 		}
 	}
 
@@ -137,7 +138,7 @@ func main() {
 
 	for _, ical := range icsCalendars {
 		inputChannel <- ical.URL
-		urlIcalMap[ical.URL] = stdOutColor[colorIndex%7]
+		urlIcalMap[ical.URL] = stdOutColor[colorIndex%14]
 		colorIndex++
 	}
 	icsParser.Wait()
