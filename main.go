@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/PuloV/ics-golang"
@@ -162,6 +163,16 @@ func main() {
 			}
 		}
 	}
+	sort.SliceStable(commonEvents, func(i, j int) bool {
+		var order bool
+		v, w := commonEvents[i], commonEvents[j]
+		if v.Start.Equal(w.Start) {
+			order = v.End.Before(w.End)
+		} else {
+			order = v.Start.Before(w.Start)
+		}
+		return order
+	})
 
 	for _, event := range commonEvents {
 		printedDescs := event.Start.Format("2006-01-02 15:04:05") + " ~ " + event.End.Format("2006-01-02 15:04:05") + " @" + event.Location + "\n" + event.Description + "\n"
