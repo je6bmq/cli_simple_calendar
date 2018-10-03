@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -163,7 +164,8 @@ func main() {
 	}
 
 	for _, event := range commonEvents {
-		printedStr := "summary: " + event.Summary + " " + "start: " + event.Start.Format("2006-01-02T15:04:05-07:00") + " end: " + event.End.Format("2006-01-02T15:04:05-07:00") + " location: " + event.Location + " description: " + event.Description
-		color.New(event.Color).Println(printedStr)
+		printedDescs := event.Start.Format("2006-01-02 15:04:05") + " ~ " + event.End.Format("2006-01-02 15:04:05") + " @" + event.Location + "\n" + event.Description + "\n"
+		color.New(event.Color).Print(event.Summary)
+		fmt.Println(" " + printedDescs)
 	}
 }
