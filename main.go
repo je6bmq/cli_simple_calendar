@@ -158,17 +158,20 @@ func main() {
 
 	for _, cal := range calendars {
 		for date := startTime; date.Before(endTime); date = date.Add(24 * time.Hour) {
-			eventList, err := cal.GetEventsByDate(date)
-			if err != nil {
-				// log.Fatalf("cannnot load event list")
-			} else {
-				for _, event := range eventList {
-					colorValue := urlIcalMap[event.GetCalendar().GetUrl()]
-					start, _ := time.ParseInLocation("2006-01-02T15:04:05", event.GetStart().Format("2006-01-02T15:04:05"), location)
-					end, _ := time.ParseInLocation("2006-01-02T15:04:05", event.GetEnd().Format("2006-01-02T15:04:05"), location)
-					commonEvents = append(commonEvents, CommonEvent{Summary: event.GetSummary(), Location: event.GetLocation(), Description: event.GetDescription(), Color: colorValue, Start: start, End: end})
+			go func(c *ics.Calendar, d time.Time, ch chan<- CommonEvent) {
+				eventList, err := c.GetEventsByDate(d)
+				if err != nil {
+					// log.Fatalf("cannnot load event list")
+				} else {
+					for _, event := range eventList {
+						colorValue := urlIcalMap[event.GetCalendar().GetUrl()]
+						start, _ := time.ParseInLocation("2006-01-02T15:04:05", event.GetStart().Format("2006-01-02T15:04:05"), location)
+						end, _ := time.ParseInLocation("2006-01-02T15:04:05", event.GetEnd().Format("2006-01-02T15:04:05"), location)
+						ch <- CommonEvent{Summary: event.GetSummary(), Location: event.GetLocation(), Description: event.GetDescription(), Color: colorValue, Start: start, End: end}
+					}
 				}
-			}
+			}(cal, date, eventsChannel)
+
 		}
 	}
 
