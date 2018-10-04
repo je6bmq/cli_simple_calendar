@@ -177,7 +177,7 @@ func main() {
 
 	for _, event := range commonEvents {
 		printedDescs := event.Start.Format("2006-01-02 15:04:05") + " ~ " + event.End.Format("2006-01-02 15:04:05") + " @" + event.Location + "\n" + event.Description + "\n"
-		color.New(event.Color).Add(color.Bold).Print(event.Summary)
+		color.New(event.Color).Add(color.Underline).Print(event.Summary)
 		fmt.Println(" " + printedDescs)
 	}
 }
