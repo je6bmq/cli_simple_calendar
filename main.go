@@ -91,40 +91,45 @@ func main() {
 	colorIndex := 0
 	var commonEvents []CommonEvent
 	location, _ := time.LoadLocation("Local")
+	eventsChannel := make(chan CommonEvent)
+
+	// var wg sync.WaitGroup
 
 	if len(cal.Items) == 0 {
 		log.Fatalf("retrieved data length is equal to 0")
 	} else {
 		for _, item := range cal.Items {
-			id := item.Id
-			// _color := colors.Calendar[item.ColorId].Background
-			events, err := service.Events.List(id).TimeMin(startTime.Format("2006-01-02T15:04:05-07:00")).TimeMax(endTime.Format("2006-01-02T15:04:05-07:00")).Do()
-			if err != nil {
-				log.Fatalf("Unable to get events: %v", err)
-			}
-			for _, event := range events.Items {
-				var startDateStr string
-				var endDateStr string
-				var format string
+			go func(id string, index int, ch chan<- CommonEvent) {
+				// _color := colors.Calendar[item.ColorId].Background
+				events, err := service.Events.List(id).TimeMin(startTime.Format("2006-01-02T15:04:05-07:00")).TimeMax(endTime.Format("2006-01-02T15:04:05-07:00")).Do()
+				if err != nil {
+					return
+				}
+				for _, event := range events.Items {
+					var startDateStr string
+					var endDateStr string
+					var format string
 
-				if len(event.Start.Date) != 0 {
-					startDateStr = event.Start.Date
-					format = "2006-01-02"
-				} else {
-					startDateStr = event.Start.DateTime
-					format = "2006-01-02T15:04:05-07:00"
+					if len(event.Start.Date) != 0 {
+						startDateStr = event.Start.Date
+						format = "2006-01-02"
+					} else {
+						startDateStr = event.Start.DateTime
+						format = "2006-01-02T15:04:05-07:00"
+					}
+					if len(event.End.Date) != 0 {
+						endDateStr = event.End.Date
+						format = "2006-01-02"
+					} else {
+						endDateStr = event.End.DateTime
+						format = "2006-01-02T15:04:05-07:00"
+					}
+					startDate, _ := time.Parse(format, startDateStr)
+					endDate, _ := time.Parse(format, endDateStr)
+					common := CommonEvent{Summary: event.Summary, Location: event.Location, Description: event.Description, Color: stdOutColor[index%14], Start: startDate, End: endDate}
+					ch <- common
 				}
-				if len(event.End.Date) != 0 {
-					endDateStr = event.End.Date
-					format = "2006-01-02"
-				} else {
-					endDateStr = event.End.DateTime
-					format = "2006-01-02T15:04:05-07:00"
-				}
-				startDate, _ := time.Parse(format, startDateStr)
-				endDate, _ := time.Parse(format, endDateStr)
-				commonEvents = append(commonEvents, CommonEvent{Summary: event.Summary, Location: event.Location, Description: event.Description, Color: stdOutColor[colorIndex%14], Start: startDate, End: endDate})
-			}
+			}(item.Id, colorIndex, eventsChannel)
 			colorIndex++
 		}
 	}
@@ -166,6 +171,17 @@ func main() {
 			}
 		}
 	}
+
+GET_EVENTS:
+	for {
+		select {
+		case event := <-eventsChannel:
+			commonEvents = append(commonEvents, event)
+		case <-time.After(1 * time.Second):
+			break GET_EVENTS
+		}
+	}
+
 	sort.SliceStable(commonEvents, func(i, j int) bool {
 		var order bool
 		v, w := commonEvents[i], commonEvents[j]
