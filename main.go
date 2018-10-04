@@ -112,17 +112,17 @@ func main() {
 					format = "2006-01-02"
 				} else {
 					startDateStr = event.Start.DateTime
-					format = "2006-01-02T15:04:05"
+					format = "2006-01-02T15:04:05-07:00"
 				}
 				if len(event.End.Date) != 0 {
 					endDateStr = event.End.Date
 					format = "2006-01-02"
 				} else {
 					endDateStr = event.End.DateTime
-					format = "2006-01-02T15:04:05"
+					format = "2006-01-02T15:04:05-07:00"
 				}
-				startDate, _ := time.ParseInLocation(format, startDateStr, location)
-				endDate, _ := time.ParseInLocation(format, endDateStr, location)
+				startDate, _ := time.Parse(format, startDateStr)
+				endDate, _ := time.Parse(format, endDateStr)
 				commonEvents = append(commonEvents, CommonEvent{Summary: event.Summary, Location: event.Location, Description: event.Description, Color: stdOutColor[colorIndex%14], Start: startDate, End: endDate})
 			}
 			colorIndex++
@@ -158,8 +158,10 @@ func main() {
 				// log.Fatalf("cannnot load event list")
 			} else {
 				for _, event := range eventList {
-					_color := urlIcalMap[event.GetCalendar().GetUrl()]
-					commonEvents = append(commonEvents, CommonEvent{Summary: event.GetSummary(), Location: event.GetLocation(), Description: event.GetDescription(), Color: _color, Start: event.GetStart(), End: event.GetEnd()})
+					colorValue := urlIcalMap[event.GetCalendar().GetUrl()]
+					start, _ := time.ParseInLocation("2006-01-02T15:04:05", event.GetStart().Format("2006-01-02T15:04:05"), location)
+					end, _ := time.ParseInLocation("2006-01-02T15:04:05", event.GetEnd().Format("2006-01-02T15:04:05"), location)
+					commonEvents = append(commonEvents, CommonEvent{Summary: event.GetSummary(), Location: event.GetLocation(), Description: event.GetDescription(), Color: colorValue, Start: start, End: end})
 				}
 			}
 		}
