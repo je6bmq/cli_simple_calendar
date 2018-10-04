@@ -90,6 +90,7 @@ func main() {
 	stdOutColor := [14]color.Attribute{color.FgRed, color.FgGreen, color.FgYellow, color.FgBlue, color.FgMagenta, color.FgCyan, color.FgWhite, color.FgHiRed, color.FgHiGreen, color.FgHiYellow, color.FgHiBlue, color.FgHiMagenta, color.FgHiCyan, color.FgHiWhite}
 	colorIndex := 0
 	var commonEvents []CommonEvent
+	location, _ := time.LoadLocation("Local")
 
 	if len(cal.Items) == 0 {
 		log.Fatalf("retrieved data length is equal to 0")
@@ -111,17 +112,17 @@ func main() {
 					format = "2006-01-02"
 				} else {
 					startDateStr = event.Start.DateTime
-					format = "2006-01-02T15:04:05-07:00"
+					format = "2006-01-02T15:04:05"
 				}
 				if len(event.End.Date) != 0 {
 					endDateStr = event.End.Date
 					format = "2006-01-02"
 				} else {
 					endDateStr = event.End.DateTime
-					format = "2006-01-02T15:04:05-07:00"
+					format = "2006-01-02T15:04:05"
 				}
-				startDate, _ := time.Parse(format, startDateStr)
-				endDate, _ := time.Parse(format, endDateStr)
+				startDate, _ := time.ParseInLocation(format, startDateStr, location)
+				endDate, _ := time.ParseInLocation(format, endDateStr, location)
 				commonEvents = append(commonEvents, CommonEvent{Summary: event.Summary, Location: event.Location, Description: event.Description, Color: stdOutColor[colorIndex%14], Start: startDate, End: endDate})
 			}
 			colorIndex++
