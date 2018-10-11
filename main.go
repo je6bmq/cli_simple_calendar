@@ -197,7 +197,13 @@ GET_EVENTS:
 	})
 
 	for _, event := range commonEvents {
-		printedDescs := event.Start.Format("2006-01-02 15:04:05") + " ~ " + event.End.Format("2006-01-02 15:04:05") + " @" + event.Location + "\n" + event.Description + "\n"
+		var locationStr string
+		if loc := event.Location; len(loc) == 0 {
+			locationStr = ""
+		} else {
+			locationStr = "@" + loc
+		}
+		printedDescs := event.Start.Format("2006-01-02 15:04:05") + " ~ " + event.End.Format("2006-01-02 15:04:05") + " " + locationStr + "\n" + event.Description + "\n"
 		color.New(event.Color).Add(color.Underline).Print(event.Summary)
 		fmt.Println(" " + printedDescs)
 	}
