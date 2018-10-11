@@ -93,7 +93,8 @@ func main() {
 	location, _ := time.LoadLocation("Local")
 	eventsChannel := make(chan CommonEvent)
 
-	// var wg sync.WaitGroup
+	idColorMap := make(map[string]color.Attribute)
+	idSummaryMap := make(map[string]string)
 
 	if len(cal.Items) == 0 {
 		log.Fatalf("retrieved data length is equal to 0")
@@ -130,6 +131,8 @@ func main() {
 					ch <- common
 				}
 			}(item.Id, colorIndex, eventsChannel)
+			idColorMap[item.Id] = stdOutColor[colorIndex%14]
+			idSummaryMap[item.Id] = item.Summary
 			colorIndex++
 		}
 	}
@@ -142,11 +145,13 @@ func main() {
 	icsParser := ics.New()
 	inputChannel := icsParser.GetInputChan()
 
-	urlIcalMap := make(map[string]color.Attribute)
+	urlColorMap := make(map[string]color.Attribute)
+	urlSummaryMap := make(map[string]string)
 
 	for _, ical := range icsCalendars {
 		inputChannel <- ical.URL
-		urlIcalMap[ical.URL] = stdOutColor[colorIndex%14]
+		urlColorMap[ical.URL] = stdOutColor[colorIndex%14]
+		urlSummaryMap[ical.URL] = ical.Name
 		colorIndex++
 	}
 	icsParser.Wait()
@@ -164,7 +169,7 @@ func main() {
 					// log.Fatalf("cannnot load event list")
 				} else {
 					for _, event := range eventList {
-						colorValue := urlIcalMap[event.GetCalendar().GetUrl()]
+						colorValue, _ := urlColorMap[event.GetCalendar().GetUrl()]
 						start, _ := time.ParseInLocation("2006-01-02T15:04:05", event.GetStart().Format("2006-01-02T15:04:05"), location)
 						end, _ := time.ParseInLocation("2006-01-02T15:04:05", event.GetEnd().Format("2006-01-02T15:04:05"), location)
 						ch <- CommonEvent{Summary: event.GetSummary(), Location: event.GetLocation(), Description: event.GetDescription(), Color: colorValue, Start: start, End: end}
@@ -207,4 +212,15 @@ GET_EVENTS:
 		color.New(event.Color).Add(color.Underline).Print(event.Summary)
 		fmt.Println(" " + printedDescs)
 	}
+
+	fmt.Println("Calendar List")
+	for key, value := range idColorMap {
+		color.New(value).Print(idSummaryMap[key])
+		fmt.Print(" ")
+	}
+	for key, value := range urlColorMap {
+		color.New(value).Print(urlSummaryMap[key])
+		fmt.Print(" ")
+	}
+	fmt.Println("")
 }
